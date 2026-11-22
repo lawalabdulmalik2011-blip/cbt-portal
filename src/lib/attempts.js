@@ -114,40 +114,80 @@ export async function submitAttempt(attemptId) {
 }
 
 // ============================================
+// Helper — smart class matching
+// ============================================
+function matchesClass(studentClass, targetClasses) {
+  if (!targetClasses || targetClasses.length === 0) return true;
+  if (!studentClass) return false;
+
+  const student = String(studentClass).toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+  return targetClasses.some((tc) => {
+    const target = String(tc).toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (student === target) return true;
+    const studentBase = student.replace(/[A-Z]+$/, '');
+    if (studentBase && studentBase === target) return true;
+    if (student.startsWith(target)) return true;
+    return false;
+  });
+}
+
+// ============================================
 // List all published exams visible to a student
 // ============================================
 export async function listAvailableExamsForStudent(studentId, classLevel) {
-  const { data, error } = await supabase
+  // 1. Fetch published exams with subject details
+  const { data: examsData, error: examsError } = await supabase
     .from('exams')
     .select(`
       *,
-      subjects ( name, color ),
-      exam_questions ( count )
+      subjects ( name, color )
     `)
     .eq('status', 'published')
     .order('start_at', { ascending: true, nullsFirst: false });
-  if (error) throw error;
 
-  // Filter by target_classes client-side (simpler than complex SQL)
-  const filtered = (data ?? []).filter((e) => {
-    if (!e.target_classes || e.target_classes.length === 0) return true;
-    return classLevel && e.target_classes.includes(classLevel);
-  });
+  if (examsError) {
+    console.error("Error fetching exams:", examsError);
+    throw examsError;
+  }
 
-  // Get this student's attempts
-  const { data: attempts } = await supabase
+  // 2. Filter by class using the helper
+  const filteredExams = (examsData ?? []).filter((e) =>
+    matchesClass(classLevel, e.target_classes)
+  );
+
+  // 3. Fetch question counts manually to avoid complex join issues
+  const examIds = filteredExams.map((e) => e.id);
+  let questionCounts = {};
+  
+  if (examIds.length > 0) {
+    const { data: questionsData } = await supabase
+      .from('exam_questions')
+      .select('exam_id')
+      .in('exam_id', examIds);
+      
+    if (questionsData) {
+      questionsData.forEach((q) => {
+        questionCounts[q.exam_id] = (questionCounts[q.exam_id] || 0) + 1;
+      });
+    }
+  }
+
+  // 4. Fetch this student's attempts
+  const { data: attemptsData } = await supabase
     .from('attempts')
     .select('*')
     .eq('student_id', studentId);
 
   const attemptsByExam = {};
-  (attempts ?? []).forEach((a) => {
+  (attemptsData ?? []).forEach((a) => {
     attemptsByExam[a.exam_id] = a;
   });
 
-  return filtered.map((e) => ({
+  // 5. Combine everything
+  return filteredExams.map((e) => ({
     ...e,
-    question_count: e.exam_questions?.[0]?.count ?? 0,
+    question_count: questionCounts[e.id] || 0,
     attempt: attemptsByExam[e.id] ?? null,
   }));
 }

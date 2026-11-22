@@ -5,7 +5,6 @@ import {
   UserCircleIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../../context/AuthContext.jsx';
-import Logo from './Logo.jsx';
 
 export default function TopBar({ variant = 'student' }) {
   const { profile, signOut } = useAuth();
@@ -17,10 +16,24 @@ export default function TopBar({ variant = 'student' }) {
   return (
     <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-200/70">
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+        
+        {/* Logo Section */}
         <div className="flex items-center gap-3">
-          <Logo size={34} />
-          {variant === 'teacher' && <span className="badge-info">Teacher</span>}
-          {variant === 'admin' && <span className="badge-danger">Admin</span>}
+          <img 
+            src="/kaztal-logo.png" 
+            alt="Kaztal Academy CBT" 
+            className="w-9 h-9 rounded-full object-cover shadow-sm ring-1 ring-slate-200" 
+          />
+          <div className="hidden sm:flex flex-col justify-center">
+            <span className="font-display font-extrabold text-slate-900 leading-tight tracking-tight text-sm">
+              Kaztal Academy
+            </span>
+            <span className="text-[10px] font-bold text-brand-600 tracking-wider">
+              CBT PORTAL
+            </span>
+          </div>
+          {variant === 'teacher' && <span className="badge-info ml-1">Teacher</span>}
+          {variant === 'admin' && <span className="badge-danger ml-1">Admin</span>}
         </div>
 
         <div className="relative">
