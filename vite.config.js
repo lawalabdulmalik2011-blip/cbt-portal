@@ -7,11 +7,12 @@ export default defineConfig({
     port: 5173,
     open: true,
   },
-  // This is the new section that fixes the Render "Blocked request" error
+  // This section fixes the Render "Blocked request" error for your domains
   preview: {
     allowedHosts: [
-      'cbt-portal-a4iu.onrender.com', // Your specific Render URL
-      '.onrender.com',                // Allows any Render URL (future-proof)
+      'kaztalacademycbt.onrender.com', // Your new specific Render URL
+      'cbt-portal-a4iu.onrender.com',  // Keeping the old one just in case
+      '.onrender.com',                 // Allows any Render URL (future-proof)
       'localhost'
     ]
   },
