@@ -7,6 +7,14 @@ export default defineConfig({
     port: 5173,
     open: true,
   },
+  // This is the new section that fixes the Render "Blocked request" error
+  preview: {
+    allowedHosts: [
+      'cbt-portal-a4iu.onrender.com', // Your specific Render URL
+      '.onrender.com',                // Allows any Render URL (future-proof)
+      'localhost'
+    ]
+  },
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
